@@ -45,6 +45,7 @@ static NSString* const kRLinkKitVersionConstant = @"version";
 @interface RNLinkkit()
 @property PLKPlaidLinkViewController* linkViewController;
 @property RNLinkkitDelegate* linkViewDelegate;
+@property PLKConfiguration* linkConfiguration;
 @end
 
 @implementation RNLinkkit
@@ -71,7 +72,6 @@ RCT_EXPORT_METHOD(_create:(NSDictionary*)configuration) {
     NSArray<NSString*> *products = [RCTConvert NSStringArray:configuration[kRLinkKitConfigProductKey]];
     NSString *clientName = [RCTConvert NSString:configuration[kRLinkKitConfigClientNameKey]];
     NSString *webhook = [RCTConvert NSString:configuration[kRLinkKitConfigWebhookKey]];
-    NSString *publicToken = [RCTConvert NSString:configuration[kRLinkKitConfigPublicTokenKey]];
     NSString *userLegalName = [RCTConvert NSString:configuration[kRLinkKitConfigUserLegalNameKey]];
     NSString *userEmailAddress = [RCTConvert NSString:configuration[kRLinkKitConfigUserEmailAddressKey]];
     NSArray<NSString*> *countryCodes = [RCTConvert NSStringArray:configuration[kRLinkKitConfigCountryCodesKey]];
@@ -112,6 +112,8 @@ RCT_EXPORT_METHOD(_create:(NSDictionary*)configuration) {
         linkConfiguration.language = language;
     }
 
+    self.linkConfiguration = linkConfiguration;
+
     // Link Delegate
     __weak typeof(self) weakSelf = self;
     self.linkViewDelegate = [[RNLinkkitDelegate alloc] init];
@@ -126,25 +128,32 @@ RCT_EXPORT_METHOD(_create:(NSDictionary*)configuration) {
     self.linkViewDelegate.onEvent = ^(NSString* event, NSDictionary<NSString*,id>*metadata) {
         [weakSelf sendEventWithName:kRLinkKitOnEventEvent body:@{kRLinkKitEventNameKey: event, kRLinkKitEventMetadataKey: metadata}];
     };
+}
 
+RCT_EXPORT_METHOD(_open:(NSDictionary*)configuration) {
+    if (!self.linkConfiguration) {
+        NSLog(@"[RNLinkKit] Cannot call `open` without first call `create`");
+        return;
+    }
+    NSString *publicToken = [RCTConvert NSString:configuration[kRLinkKitConfigPublicTokenKey]];
+    NSString *institution = [RCTConvert NSString:configuration[kRLinkKitConfigInstitutionKey]];
+    
     // Link ViewController
     if ([publicToken length] > 0) {
         self.linkViewController = [[PLKPlaidLinkViewController alloc] initWithPublicToken:publicToken
-                                                                            configuration:linkConfiguration
+                                                                            configuration:self.linkConfiguration
                                                                                  delegate:self.linkViewDelegate];
     }
     else if ([institution length] > 0) {
         self.linkViewController = [[PLKPlaidLinkViewController alloc] initWithInstitution:institution
-                                                                       configuration:linkConfiguration
+                                                                       configuration:self.linkConfiguration
                                                                             delegate:self.linkViewDelegate];
     }
     else {
-        self.linkViewController = [[PLKPlaidLinkViewController alloc] initWithConfiguration:linkConfiguration
+        self.linkViewController = [[PLKPlaidLinkViewController alloc] initWithConfiguration:self.linkConfiguration
                                                                               delegate:self.linkViewDelegate];
     }
-}
 
-RCT_EXPORT_METHOD(_open) {
     if (self.linkViewController) {
         [RCTPresentedViewController() presentViewController:self.linkViewController animated:YES completion:nil];
     }

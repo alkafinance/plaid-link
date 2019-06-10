@@ -59,12 +59,15 @@ export interface PlaidConfiguration {
   userEmailAddress?: string
   countryCodes?: string[]
   language?: string
-  publicToken?: string
-  institution?: string
 
   onSuccess: (publicToken: string, meta: EventMeta) => void
   onExit: (error: any, meta: EventMeta) => void
   onEvent?: (eventName: EventName, meta: EventMeta) => void
+}
+
+export interface OpenOptions {
+  publicToken?: string
+  institution?: string
 }
 
 interface PlaidLink {
@@ -84,8 +87,6 @@ interface PlaidLink {
    * - `userEmailAddress` (string)       - the email address of the end-user, necessary for microdeposit support
    * - `countryCodes` (array of strings) - a list of ISO 3166-1 alpha-2 country codes, used to select institutions available in the given countries
    * - `language` (string)               - Plaid-supported language to localize Link. English ('en') will be used by default. For details consult https://plaid.com/docs/#parameter-reference.
-   * - `publicToken` (string)            - the public_token to invoke update mode (see https://plaid.com/docs/quickstart/#use-link-to-resolve-error)
-   * - `institution` (string)            - institution identifier for which to invoke the custom initializer flow
    *
    * The are deprecated configuration options for the legacy API
    * - `longtailAuth` (boolean) - enable longtail auth institutions
@@ -101,8 +102,10 @@ interface PlaidLink {
    * Open Plaid Link.
    *
    * Calling `open()` will present the Plaid Link user interface implemented by the native `PLKPlaidLinkViewController`
+   * - `publicToken` (string)            - the public_token to invoke update mode (see https://plaid.com/docs/quickstart/#use-link-to-resolve-error)
+   * - `institution` (string)            - institution identifier for which to invoke the custom initializer flow
    */
-  open: () => void
+  open: (options?: OpenOptions) => void
   version: string
 }
 
